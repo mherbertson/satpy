@@ -22,6 +22,9 @@ import logging
 from satpy.dataset import combine_metadata
 from satpy.composites import GenericCompositor
 
+from satpy.composites import enhance2dataset, add_bands
+import xarray as xr
+
 LOG = logging.getLogger(__name__)
 
 
@@ -42,3 +45,69 @@ class GreenCorrector(GenericCompositor):
         new_green = sum(fraction * value for fraction, value in zip(self.fractions, projectables))
         new_green.attrs = combine_metadata(*projectables)
         return super(GreenCorrector, self).__call__((new_green,), **attrs)
+
+
+class BackgroundCompositor(GenericCompositor):
+
+    def __init__(self, name, overlay=False, *args, **kwargs):
+
+        self.overlay = overlay
+        super(BackgroundCompositor, self).__init__(name, *args, **kwargs)
+
+    def _overlay(self, background, foreground, alpha=None):
+        if alpha is not None:
+            base = background.where(alpha)
+        else:
+            base = background
+        first_pass = xr.where(base >= 0.5, 1 - 2 * (1-background) * (1-foreground), base)
+        data = xr.where(base < 0.5, 2 * background * foreground, first_pass)
+        return data
+
+    def __call__(self, projectables, *args, **kwargs):
+        """Call the compositor."""
+        projectables = self.match_data_arrays(projectables)
+
+        # Get enhanced datasets
+        foreground = enhance2dataset(projectables[0])
+        background = enhance2dataset(projectables[1])
+
+        # Adjust bands so that they match
+        # L/RGB -> RGB/RGB
+        # LA/RGB -> RGBA/RGBA
+        # RGB/RGBA -> RGBA/RGBA
+        foreground = add_bands(foreground, background['bands'])
+        background = add_bands(background, foreground['bands'])
+
+        # Get merged metadata
+        attrs = combine_metadata(foreground, background)
+        if attrs.get('sensor') is None:
+            # sensor can be a set
+            attrs['sensor'] = self._get_sensors(projectables)
+
+        # Stack the images
+        if 'A' in foreground.attrs['mode']:
+            # Use alpha channel as weight and blend the two composites
+            alpha = foreground.sel(bands='A')
+            data = []
+            # NOTE: there's no alpha band in the output image, it will
+            # be added by the data writer
+            for band in foreground.mode[:-1]:
+                fg_band = foreground.sel(bands=band)
+                bg_band = background.sel(bands=band)
+                if self.overlay:
+                    chan = self._overlay(bg_band, fg_band, alpha)
+                else:
+                    chan = (fg_band * alpha + bg_band * (1 - alpha))
+                chan = xr.where(chan.isnull(), bg_band, chan)
+                data.append(chan)
+        else:
+            if self.overlay:
+                data = self._overlay(background, foreground)
+            else:
+                data = xr.where(foreground.isnull(), background, foreground)
+            # Split to separate bands so the mode is correct
+            data = [data.sel(bands=b) for b in data['bands']]
+
+        res = super(BackgroundCompositor, self).__call__(data, **kwargs)
+        res.attrs.update(attrs)
+        return res
