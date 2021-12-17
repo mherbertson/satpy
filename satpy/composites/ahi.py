@@ -19,8 +19,8 @@
 
 import logging
 
-from satpy.dataset import combine_metadata
 from satpy.composites import GenericCompositor
+from satpy.dataset import combine_metadata
 
 from satpy.composites import enhance2dataset, add_bands
 import xarray as xr

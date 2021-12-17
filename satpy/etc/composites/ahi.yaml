@@ -14,7 +14,7 @@ modifiers:
     - solar_azimuth_angle
     - solar_zenith_angle
 
-  true_color_reproduction_rayleigh_corrected:
+  no_aerosol_rayleigh_corrected:
     modifier: !!python/name:satpy.modifiers.PSPRayleighReflectance
     atmosphere: us-standard
     aerosol_type: rayleigh_only
@@ -48,9 +48,9 @@ composites:
     fractions: [0.6321, 0.2928, 0.0751]
     prerequisites:
     - name: B02
-      modifiers: [sunz_corrected, true_color_reproduction_rayleigh_corrected]
+      modifiers: [sunz_corrected, no_aerosol_rayleigh_corrected]
     - name: B03
-      modifiers: [sunz_corrected, true_color_reproduction_rayleigh_corrected]
+      modifiers: [sunz_corrected, no_aerosol_rayleigh_corrected]
     - name: B04
       modifiers: [sunz_corrected]
     standard_name: none
@@ -182,13 +182,22 @@ composites:
     standard_name: fire_temperature
     name: fire_temperature_39refl
 
-
   overview:
     compositor: !!python/name:satpy.composites.GenericCompositor
     prerequisites:
-    - 0.65
-    - 0.85
-    - 10.4
+    - name: B03
+      modifiers: [sunz_corrected]
+    - name: B04
+      modifiers: [sunz_corrected]
+    - name: B13
+    standard_name: overview
+
+  overview_raw:
+    compositor: !!python/name:satpy.composites.GenericCompositor
+    prerequisites:
+      - B03
+      - B04
+      - B13
     standard_name: overview
 
   natural_color:
@@ -238,10 +247,10 @@ composites:
     compositor: !!python/name:satpy.composites.SelfSharpenedRGB
     prerequisites:
       - name: B03
-        modifiers: [sunz_corrected, true_color_reproduction_rayleigh_corrected]
+        modifiers: [sunz_corrected, no_aerosol_rayleigh_corrected]
       - name: green_true_color_reproduction
       - name: B01
-        modifiers: [sunz_corrected, true_color_reproduction_rayleigh_corrected]
+        modifiers: [sunz_corrected, no_aerosol_rayleigh_corrected]
     standard_name: true_color_reproduction
 
 #  true_color_reducedsize_land:

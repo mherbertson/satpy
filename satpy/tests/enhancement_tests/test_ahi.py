@@ -17,16 +17,15 @@
 # satpy.  If not, see <http://www.gnu.org/licenses/>.
 """Unit testing for the AHI enhancement function."""
 
-import unittest
+import dask.array as da
 import numpy as np
 import xarray as xr
-import dask.array as da
 
 
-class TestAHIEnhancement(unittest.TestCase):
+class TestAHIEnhancement():
     """Test the AHI enhancement functions."""
 
-    def setUp(self):
+    def setup(self):
         """Create test data."""
         data = da.arange(-100, 1000, 110).reshape(2, 5)
         rgb_data = np.stack([data, data, data])
@@ -35,8 +34,9 @@ class TestAHIEnhancement(unittest.TestCase):
 
     def test_jma_true_color_reproduction(self):
         """Test the jma_true_color_reproduction enhancement."""
-        from satpy.enhancements.ahi import jma_true_color_reproduction
         from trollimage.xrimage import XRImage
+
+        from satpy.enhancements.ahi import jma_true_color_reproduction
 
         expected = [[[-109.98, 10.998, 131.976, 252.954, 373.932],
                     [494.91, 615.888, 736.866, 857.844, 978.822]],
