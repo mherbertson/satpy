@@ -23,3 +23,12 @@ enhancements:
           stretch: crude
           min_stretch: [0.08, 0.08, 0.08]
           max_stretch: [.93, .90, .90]
+
+  night_ir:
+    standard_name: night_ir
+    operations:
+      - name: colorize    
+        method: !!python/name:satpy.enhancements.colorize
+        kwargs:
+          palettes:
+           - {colors: greys, min_value: 183.15, max_value: 303.15} # -90c to 30c

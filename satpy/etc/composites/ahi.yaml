@@ -394,3 +394,19 @@ composites:
     prerequisites:
       - night_ir_alpha
       - _night_background_hires
+
+  night_ir:
+    standard_name: night_ir
+    compositor: !!python/name:satpy.composites.GenericCompositor
+    prerequisites:
+      - name: B13
+
+  day_night_tcr:
+    compositor: !!python/name:satpy.composites.DayNightCompositor
+    standard_name: non_enhanced_crude_stretch_1
+    lim_low: 70.0 # 87.0
+    lim_high: 85.0 # 88.0
+    # day_night: 'day_only'
+    prerequisites:
+      - true_color_reproduction
+      - night_ir
