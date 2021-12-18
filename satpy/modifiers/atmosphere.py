@@ -80,7 +80,7 @@ class PSPRayleighReflectance(ModifierBase):
         try:
             refl_cor_band = corrector.get_reflectance(sunz, satz, ssadiff,
                                                       vis.attrs['name'],
-                                                      red.data, 75., 0.50)
+                                                      red.data, 75., 0.0)
         except (KeyError, IOError):
             logger.warning("Could not get the reflectance correction using band name: %s", vis.attrs['name'])
             logger.warning("Will try use the wavelength, however, this may be ambiguous!")
