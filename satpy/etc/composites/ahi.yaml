@@ -404,7 +404,7 @@ composites:
   day_night_tcr:
     compositor: !!python/name:satpy.composites.DayNightCompositor
     standard_name: non_enhanced_crude_stretch_1
-    lim_low: 80.0 # 87.0
+    lim_low: 78.0 # 87.0
     lim_high: 85.0 # 88.0
     # day_night: 'day_only'
     prerequisites:
