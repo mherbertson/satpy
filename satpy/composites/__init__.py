@@ -1091,6 +1091,18 @@ class LuminanceSharpeningCompositor(GenericCompositor):
 class SandwichCompositor(GenericCompositor):
     """Make a sandwich product."""
 
+    def __init__(self, name, overlay=False, *args, **kwargs):
+        """Determine blend mode.
+
+        Args:
+            overlay (bool): If True, use overlay blend method otherwise luminance.
+
+        https://en.wikipedia.org/wiki/Blend_modes#Overlay
+        """
+
+        self.overlay = overlay
+        super(SandwichCompositor, self).__init__(name, *args, **kwargs)
+
     def __call__(self, projectables, *args, **kwargs):
         """Generate the composite."""
         projectables = self.match_data_arrays(projectables)
