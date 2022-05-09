@@ -27,6 +27,7 @@ import dask.array as da
 import numpy as np
 import pytest
 import xarray as xr
+from pyresample import AreaDefinition
 
 
 class TestMatchDataArrays(unittest.TestCase):
@@ -135,6 +136,8 @@ class TestRatioSharpenedCompositors(unittest.TestCase):
                  'start_time': datetime(2018, 1, 1, 18),
                  'modifiers': tuple(),
                  'resolution': 1000,
+                 'calibration': 'reflectance',
+                 'units': '%',
                  'name': 'test_vis'}
         ds1 = xr.DataArray(da.ones((2, 2), chunks=2, dtype=np.float64),
                            attrs=attrs, dims=('y', 'x'),
@@ -229,6 +232,13 @@ class TestRatioSharpenedCompositors(unittest.TestCase):
         np.testing.assert_allclose(res[1], np.array([[3, 3], [3, 3]], dtype=np.float64))
         np.testing.assert_allclose(res[2], np.array([[4, 4], [4, 4]], dtype=np.float64))
 
+    def test_no_units(self):
+        """Test that the computed RGB has no units attribute."""
+        from satpy.composites import RatioSharpenedRGB
+        comp = RatioSharpenedRGB(name='true_color')
+        res = comp((self.ds1, self.ds2, self.ds3))
+        assert "units" not in res.attrs
+
 
 class TestDifferenceCompositor(unittest.TestCase):
     """Test case for the difference compositor."""
@@ -315,12 +325,12 @@ class TestDayNightCompositor(unittest.TestCase):
         self.sza = xr.DataArray(sza, dims=('y', 'x'))
 
         # fake area
-        my_area = mock.MagicMock()
-        lons = np.array([[-95., -94.], [-93., -92.]])
-        lons = da.from_array(lons, lons.shape)
-        lats = np.array([[40., 41.], [42., 43.]])
-        lats = da.from_array(lats, lats.shape)
-        my_area.get_lonlats.return_value = (lons, lats)
+        my_area = AreaDefinition(
+            "test", "", "",
+            "+proj=longlat",
+            2, 2,
+            (-95.0, 40.0, -92.0, 43.0),
+        )
         self.data_a.attrs['area'] = my_area
         self.data_b.attrs['area'] = my_area
         # not used except to check that it matches the data arrays
